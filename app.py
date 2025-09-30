@@ -56,7 +56,7 @@ def generate_category(transaction: str, context: str) -> str:
         "X-Goog-Api-Key": GEMINI_API_KEY
     }
     
-    prompt = f """
+    prompt = f"""
     You are a financial transaction categorization assistant.
 
     Categories: Food, Travel, Bills, Shopping, Entertainment, Health, Education
