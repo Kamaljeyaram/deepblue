@@ -1,0 +1,53 @@
+{
+  "Food": [
+    "Swiggy order",
+    "Zomato bill",
+    "Restaurant dinner",
+    "Grocery store",
+    "Domino's pizza",
+    "McDonald's",
+    "Starbucks coffee"
+  ],
+  "Travel": [
+    "Uber ride",
+    "Ola cab",
+    "Train ticket",
+    "Flight booking",
+    "Bus fare",
+    "Metro recharge"
+  ],
+  "Bills": [
+    "Electricity bill",
+    "Gas payment",
+    "WiFi recharge",
+    "Water bill",
+    "Mobile recharge",
+    "Netflix subscription"
+  ],
+  "Shopping": [
+    "Amazon purchase",
+    "Flipkart order",
+    "Myntra order",
+    "Big Bazaar shopping",
+    "Local mall purchase"
+  ],
+  "Entertainment": [
+    "Movie ticket",
+    "Spotify subscription",
+    "Netflix subscription",
+    "Cinema hall",
+    "Concert ticket"
+  ],
+  "Health": [
+    "Pharmacy bill",
+    "Doctor consultation",
+    "Hospital payment",
+    "Gym membership"
+  ],
+  "Education": [
+    "School fees",
+    "College fees",
+    "Online course subscription",
+    "Bookstore purchase"
+  ]
+}
