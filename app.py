@@ -1,27 +1,28 @@
+# app.py
 from fastapi import FastAPI
 from pydantic import BaseModel
-import json
-import faiss
-import numpy as np
-import requests
-from sentence_transformers import SentenceTransformer
 import os
+import json
+import requests
+import numpy as np
+import faiss
+from sentence_transformers import SentenceTransformer
 
 # -------------------------------
-# 🔹 Config
+# Config
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 SIMILARITY_THRESHOLD = 0.6
 
 # -------------------------------
-# 🔹 Load categories JSON
+# Load categories JSON
 with open("categories.json", "r") as f:
     categories = json.load(f)
 
-# 🔹 Initialize embedding model
+# Initialize embedding model
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
-# 🔹 Build FAISS index
+# Build FAISS index
 data = []
 labels = []
 for cat, examples in categories.items():
@@ -35,51 +36,44 @@ index = faiss.IndexFlatIP(d)
 index.add(np.array(data))
 
 # -------------------------------
-# 🔹 Web search function
+# Web search function
 def web_search(query: str) -> str:
     url = "https://api.tavily.com/search"
     headers = {"Content-Type": "application/json"}
     payload = {"api_key": TAVILY_API_KEY, "query": query, "num_results": 3}
-    
     resp = requests.post(url, headers=headers, data=json.dumps(payload))
     results = resp.json()
-    
     contexts = [r["content"] for r in results.get("results", [])]
     return " ".join(contexts) if contexts else ""
 
 # -------------------------------
-# 🔹 Gemini classification
+# Gemini classification
 def generate_category(transaction: str, context: str) -> str:
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GEMINI_API_KEY
     }
-    
-    prompt = f"""
-    You are a financial transaction categorization assistant.
 
-    Categories: Food, Travel, Bills, Shopping, Entertainment, Health, Education
+    prompt = f"""You are a financial transaction categorization assistant.
+Categories: Food, Travel, Bills, Shopping, Entertainment, Health, Education
+Transaction: "{transaction}"
+Retrieved context:
+{context}
+Classify the transaction into one of the categories. Answer only with the category name.
+"""
 
-    Transaction: "{transaction}"
-
-    Retrieved context:
-    {context}
-
-    Classify the transaction into one of the categories. Answer only with the category name.
-    """
-    
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     response = requests.post(url, headers=headers, data=json.dumps(payload))
     result = response.json()
-    
+
     try:
         return result["candidates"][0]["content"]["parts"][0]["text"]
     except:
         return "Error in response"
 
 # -------------------------------
-# 🔹 RAG categorization
+# RAG categorization
 def rag_categorize(transaction: str) -> str:
     q_vec = embedder.encode(transaction)
     q_vec = q_vec / np.linalg.norm(q_vec)
@@ -95,17 +89,14 @@ def rag_categorize(transaction: str) -> str:
     category = generate_category(transaction, context)
     return category
 
+# -------------------------------
+# FastAPI setup
+app = FastAPI(title="RAG Transaction Categorizer")
 
-app = FastAPI(title="RAG Transaction Categorizer API")
-
-class TransactionRequest(BaseModel):
+class Transaction(BaseModel):
     transaction: str
 
 @app.post("/categorize")
-def categorize(request: TransactionRequest):
-    transaction = request.transaction
-    category = rag_categorize(transaction)
-    return {"transaction": transaction, "category": category}
-
-# -------------------------------
-# For local testing: uvicorn app:app --reload
+def categorize(payload: Transaction):
+    category = rag_categorize(payload.transaction)
+    return {"category": category}
